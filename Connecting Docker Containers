@@ -81,9 +81,42 @@ $ ifconfig
 eth0      Link encap:Ethernet  HWaddr 02:42:ac:11:00:03  
           inet addr:172.17.0.3  Bcast:0.0.0.0  Mask:255.255.0.0
 
+Okay, so we have an IP address of 172.17.0.3. Let’s test we can see that from a client container.
+Open a second terminal.
+Start the client1 container:
 
+docker run -itd --name=client1 client_img /bin/bash
 
+Attach to it:
 
+docker attach client1
 
+If you do not see the shell, click the up arrow.
+Make a test connection to the server1 container’s IP address:
+
+curl 172.17.0.3 
+
+If everything works, you should see the HTML of the Apache HTTP server’s default page.
+This indicates the the client1 container is able to make connections to the server1 container’s HTTP port.
+-----------------------------------------------------------------------------------------------------------------
+Port Binding
+------------
+What if we want to expose our HTTP server to the host network, including application on the host machine, and other machines on the host network? In this scenario, we need to bind a host port to a container port.
+To expose the Apache HTTP server to the host network, we need to bind port 80 on the server container to port 8080 on the host machine.
+We can do this like so:
+
+docker run -itd -p 8080:80 --name=server2 server_img /bin/bash
+
+The -p 8080:80 option is the thing to pay attention to here.
+Now, attach to the container:
+
+docker attach server2 
+
+If you do not see the shell, click the up arrow. And start the Apache HTTP server:
+
+/etc/init.d/apache2 start
+
+Now, from the host system, visit http://localhost:8080/ and you should see the Apache HTTP server default page.
+-------------------------------------------------------------------------------------------------------------------------
 
 
