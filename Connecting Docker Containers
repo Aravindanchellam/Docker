@@ -1,0 +1,89 @@
+1) Setup and Attach
+--------------------    
+docker run -itd --name=client_setup ubuntu /bin/bash
+docker attach client_setup
+
+run them inside Container
+--------------------
+apt-get install curl
+if Unable found, then update is required
+apt-get update
+
+If you do not see the shell, click the up arrow.
+Now, detach from the client container using CTRL+p then CTRL+q.
+Then, stop it, and commit:
+
+docker stop client_setup
+docker commit client_setup client_img
+
+
+We now have an image called client_img to use.
+The second container we want to use is, again, derived from an Ubuntu installation. But this time, we’ll modify it to run a Apache HTTP server.
+First, we create it and attach, like before:
+
+docker run -itd --name=server_setup ubuntu /bin/bash
+docker attach server_setup
+
+Then, once we have a shell inside the container, we install the Apache HTTP server:
+
+apt-get install apache2
+
+When the installation is complete, detach from the container using CTRL+p and CTRL+q.
+Now, stop the container, and commit it:
+
+docker stop server_setup
+docker commit server_setup server_img
+
+We now have two images: client_img and server_img.
+Now we have this set up, we can explore the various connection possibilities.
+--------------------------------------------------------------------------------------
+The Docker Bridge
+-------------------
+By default, a Docker container is isolated from other containers and the external network. Docker provides a bridge, the docker0 interface, which is created with the installation of the Docker Engine.
+It is through the Docker bridge that communication is possible amongst containers and between containers and the host machine.
+You can see the Docker bridge by running this command on a Docker host:
+
+You should see something like this in the output:
+
+docker0   Link encap:Ethernet  HWaddr 02:42:a2:dc:0f:a8  
+          inet addr:172.17.0.1  Bcast:0.0.0.0  Mask:255.255.0.0
+          inet6 addr: fe80::42:a2ff:fedc:fa8/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:1477 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:2436 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:83901 (83.9 KB)  TX bytes:3606039 (3.6 MB)  
+
+
+The bridge interface works locally, on a single Docker host, and is the connection mechanism behind all three approaches we cover in this post. In the next post, we’ll move on to the overlay interface, which allows us to network containers across multiple Docker hosts.
+----------------------------------------------------------------------
+Exposing Ports
+--------------------------
+First, let’s see how we can run a server container so that it exposes port 80 (HTTP) to other containers.
+To do so, I run the container with the expose command, which tells Docker to expose port number specified when it runs the container. An exposed port is one that other containers can reach.
+Let’s run server_img as a container called server1, exposing port 80:
+
+docker run -itd --expose=80 --name=server1 server_img /bin/bash
+
+We’ll name our containers sequentially (server1, server2, and so on) as we go.
+Then, attach to the container:
+
+docker attach server1
+
+Again, If you do not see the shell, click the up arrow.
+Start the Apache HTTP server:
+
+$ /etc/init.d/apache2 start
+
+And get the IP address:
+
+$ ifconfig
+eth0      Link encap:Ethernet  HWaddr 02:42:ac:11:00:03  
+          inet addr:172.17.0.3  Bcast:0.0.0.0  Mask:255.255.0.0
+
+
+
+
+
+
+
